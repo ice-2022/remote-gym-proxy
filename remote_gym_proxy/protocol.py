@@ -3,12 +3,30 @@ import agent_space_encoder
 import numpy as np
 
 
-class Space:
-    def __init__(self):
-        print("space")
-
 
 class Protocol:
+    def __init__(self):
+        self.raw = None
+        self.obj = None
+        self.code = None
+
+    def _code(self):
+        raise NotImplementedError()
+
+    def set_raw(self, raw):
+        self.raw = raw
+
+    def set_obj(self, obj):
+        self.obj = obj
+
+
+    def encode(self):
+        raise NotImplementedError()
+
+    def decode(self):
+        raise NotImplementedError()
+
+
     REQUEST_EXIT = -1
     REQUEST_SPACE = 1
     RESPONSE_SPACE = 101

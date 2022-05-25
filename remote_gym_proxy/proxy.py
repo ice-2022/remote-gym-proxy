@@ -24,6 +24,7 @@ class Proxy:
         return self.agents[env_id]
 
     def remove_env(self, env_id):
+        print(self.agents.keys())
         del self.agents[env_id]
 
     def remove_all(self):

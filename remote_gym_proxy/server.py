@@ -37,6 +37,12 @@ class Server:
         while True:
             client_id = processing_socket.fileno()
             data = processing_socket.recv(1024)
+            if not data:
+                # 这是断开了
+                self.proxy.remove_env(client_id)
+                print("连接断开了, client: ", client_id)
+                continue
+
             protocol = network_protocol.to_protocol(data)
             response = None
 
@@ -49,6 +55,24 @@ class Server:
                     action_space=action_space,
                     observation_space=observation_space)
                 response = rep_space.to_bytes()
+
+            elif protocol.code == Protocol.REQUEST_RESET:
+                print("收到 Protocol.REQUEST_RESET 指令")
+                env = self.proxy.get_or_create_env(client_id)
+                observation = env.reset()
+                reset = network_protocol.ResponseReset(observation=observation)
+                response = reset.to_bytes()
+
+            elif protocol.code == Protocol.REQUEST_STEP:
+                print("收到 Protocol.REQUEST_STEP 指令")
+                env = self.proxy.get_or_create_env(client_id)
+                observation, reward, done = env.step(protocol.action)
+                step = network_protocol.ResponseStep(
+                    observation=observation,
+                    reward=reward,
+                    done=done
+                )
+                response = step.to_bytes()
 
             processing_socket.send(response)
 

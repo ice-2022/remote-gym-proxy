@@ -37,26 +37,26 @@ class Client:
 
         # 请求 环境的space 相关信息
         request_space = network_protocol.RequestSpace()
+        print("11111")
         self.socket.send(request_space.to_bytes())
         space_data = self.socket.recv(1024)
         response_space = network_protocol.to_protocol(space_data)
         self.action_space = response_space.action_space
         self.observation_space = response_space.observation_space
 
-
     def reset(self):
-        cmd = {"type": "reset"}
-        self.socket.send(json.dumps(cmd).encode("utf-8"))
-        info = self.socket.recv(1024).decode('utf-8')
-        obs_json = json.loads(info)
-        return np.array(obs_json)
+        request_reset = network_protocol.RequestReset()
+        self.socket.send(request_reset.to_bytes())
+        reset_data = self.socket.recv(1024)
+        response_reset = network_protocol.to_protocol(reset_data)
+        return response_reset.observation
 
     def close(self):
         self.socket.close()
 
     def step(self, action):
-        cmd = {"type": "step", "action": action.tolist()}
-        self.socket.send(json.dumps(cmd).encode("utf-8"))
-        back = self.socket.recv(1024).decode('utf-8')
-        result = json.loads(back)
-        return np.array(result["observation"]), result["reward"], result["done"], result["info"]
+        request_step = network_protocol.RequestStep(action=action)
+        self.socket.send(request_step.to_bytes())
+        step_data = self.socket.recv(1024)
+        response_step = network_protocol.to_protocol(step_data)
+        return response_step.observation, response_step.reward, response_step.done, {}
