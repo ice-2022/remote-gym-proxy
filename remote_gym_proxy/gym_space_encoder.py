@@ -1,3 +1,7 @@
+"""
+A simple json encoder for Discrete or Box
+"""
+
 import numpy as np
 from gym.spaces.discrete import Discrete
 from gym.spaces.box import Box
@@ -18,7 +22,6 @@ def encode_discrete(discrete):
 def decode_box(data_json):
     low = np.array(data_json["low"])
     high = np.array(data_json["high"])
-    # 数据类型
     dtype = np.dtype(data_json["dtype"])
     return Box(low, high, None, dtype)
 
