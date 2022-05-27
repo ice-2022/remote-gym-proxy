@@ -1,6 +1,6 @@
-from gym_core import GymServer
 import gym
-from gym_core import GymProxy
+from remote_gym_proxy.core import GymServer
+from remote_gym_proxy.core import GymProxy
 
 
 class CartPoleV0Proxy(GymProxy):

@@ -5,13 +5,15 @@ Something the training env is different from the actor env
 
 import numpy as np
 
-from remote_gym_proxy import gym_network
+from remote_gym_proxy.network import send_json
+from remote_gym_proxy.network import Server
+from remote_gym_proxy.network import Client
 from remote_gym_proxy import gym_space_encoder
 import json
 import gym
 
 
-class GymServer(gym_network.Server):
+class GymServer(Server):
     def __init__(self, address, port, gym_proxy):
         super(GymServer, self).__init__(address=address, port=port)
         self.gym_proxy = gym_proxy
@@ -30,7 +32,7 @@ class GymServer(gym_network.Server):
         code = json_data["code"]
         env = self.gym_proxy.get_or_create_env(client_id)
         if code == 1:
-            # 请求space空间
+            # process space
             json_response = {
                 "code": 1001,
                 "value": {
@@ -38,19 +40,19 @@ class GymServer(gym_network.Server):
                     "observation_space": gym_space_encoder.encode_agent_space_to_json(env.observation_space),
                 }
             }
-            gym_network.send_json(processing_socket, json_response)
+            send_json(processing_socket, json_response)
 
         elif code == 2:
-            # 请求 reset
+            # process reset
             observation = env.reset()
             json_response = {
                 "code": 1002,
                 "value": observation.tolist()
             }
-            gym_network.send_json(processing_socket, json_response)
+            send_json(processing_socket, json_response)
 
         elif code == 3:
-            # 请求 step
+            # process step
             action = json_data["value"]
             observation, reward, done, info = env.step(action)
             json_response = {
@@ -61,12 +63,12 @@ class GymServer(gym_network.Server):
                     "done": done,
                 }
             }
-            gym_network.send_json(processing_socket, json_response)
+            send_json(processing_socket, json_response)
 
 
 class RemoteEnv(gym.Env):
     def __init__(self, address, port):
-        self.client = gym_network.Client(address=address, port=port)
+        self.client = Client(address=address, port=port)
         self.client.connect()
         # init space info
         action_space, observation_space = self._get_space()
