@@ -8,7 +8,7 @@ import numpy as np
 from remote_gym_proxy.network import send_json
 from remote_gym_proxy.network import Server
 from remote_gym_proxy.network import Client
-from remote_gym_proxy import gym_space_encoder
+from remote_gym_proxy import gym_encoder
 import json
 import gym
 
@@ -36,8 +36,8 @@ class GymServer(Server):
             json_response = {
                 "code": 1001,
                 "value": {
-                    "action_space": gym_space_encoder.encode_agent_space_to_json(env.action_space),
-                    "observation_space": gym_space_encoder.encode_agent_space_to_json(env.observation_space),
+                    "action_space": gym_encoder.encode_agent_space_to_json(env.action_space),
+                    "observation_space": gym_encoder.encode_agent_space_to_json(env.observation_space),
                 }
             }
             send_json(processing_socket, json_response)
@@ -79,8 +79,8 @@ class RemoteEnv(gym.Env):
         bytes_data = self.client.request('{"code": 1}')
         json_data = json.loads(bytes_data.decode('utf-8'))
         value = json_data["value"]
-        action_space = gym_space_encoder.decode_agent_space_from_json(value["action_space"])
-        observation_space = gym_space_encoder.decode_agent_space_from_json(value["observation_space"])
+        action_space = gym_encoder.decode_agent_space_from_json(value["action_space"])
+        observation_space = gym_encoder.decode_agent_space_from_json(value["observation_space"])
         return action_space, observation_space
 
     def step(self, action):
@@ -135,3 +135,35 @@ class GymProxy:
 
     def env_num(self):
         return len(self.agents.keys())
+
+
+class AgentServer(Server):
+    def __init__(self, address, port, trainer):
+        super(AgentServer, self).__init__(address=address, port=port)
+        self.trainer = trainer
+
+    def _handle_request(self, bytes_data, processing_socket):
+        json_data = json.loads(bytes_data.decode("utf-8"))
+        observation = np.array(json_data["observation"])
+        action = self.trainer.compute_single_action(observation)
+        response = {
+            "action": action.tolist()
+        }
+        send_json(processing_socket, response)
+
+    def _handle_connection_close(self, processing_socket):
+        print("关闭服务器")
+
+
+class AgentClient:
+    def __init__(self, address, port):
+        self.client = Client(address=address, port=port)
+        self.client.connect()
+
+    def request_action(self, observation):
+        json_request = {
+            "observation": observation.tolist()
+        }
+        data = self.client.request(json.dumps(json_request))
+        json_data = json.loads(data)
+        return json_data["action"]

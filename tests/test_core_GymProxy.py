@@ -1,8 +1,8 @@
 import gym
-from remote_gym_proxy.proxy import Proxy
+from remote_gym_proxy.core import GymProxy
 
 
-class TestProxy(Proxy):
+class TestProxy(GymProxy):
 
     def create_env_custom(self):
         return gym.make('CartPole-v0')

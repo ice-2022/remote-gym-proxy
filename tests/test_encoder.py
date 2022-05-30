@@ -1,7 +1,7 @@
 from gym.spaces.discrete import Discrete
 from gym.spaces.box import Box
 import numpy as np
-from remote_gym_proxy import gym_space_encoder
+import remote_gym_proxy.gym_encoder as encoder
 
 if __name__ == "__main__":
     # 测试 Discrete 类

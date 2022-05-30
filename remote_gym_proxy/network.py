@@ -37,6 +37,7 @@ class Server:
         server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         server_socket.bind((self.address, self.port))
         server_socket.listen(5)
+        print("Server started, ip:", self.address, ",port:", self.port)
         print('Waiting for connection...')
 
         # 等待连接
@@ -82,6 +83,7 @@ class Server:
                     self._handle_request(bytes_data, processing_socket)
                 except Exception:
                     print("客户端的请求，处理异常，IP:", processing_address)
+                    processing_socket.close()
                     traceback.print_exc()
 
         processing_socket.close()
@@ -107,6 +109,10 @@ class Client:
         buffer = b''
         while True:
             data = self.socket.recv(1024)
+            if not data:
+                print("服务器数据返回异常")
+                self.socket.close()
+                return None
 
             # Deal sticky, packet, unpacking in communications
             # the struct format is "hhs", so the length is 2,2,n
